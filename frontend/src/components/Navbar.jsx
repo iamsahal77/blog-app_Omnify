@@ -48,6 +48,9 @@ const Navbar = () => {
                 <div className="md:hidden">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                         <Link to="/" className="text-gray-600 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-medium">Home</Link>
+                        <Link to="/blog" className="text-gray-600 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-medium">Blog</Link>
+                        <Link to="/about" className="text-gray-600 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-medium">About</Link>
+                        <Link to="/contact" className="text-gray-600 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-medium">Contact</Link>
                     </div>
                      <div className="pt-4 pb-3 border-t border-gray-200">
                         {isLoggedIn ? (
