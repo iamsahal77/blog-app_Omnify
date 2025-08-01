@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { BrowserRouter as Router } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import HomePage from './pages/HomePage'
+import Newsletter from './components/NewsLetter'
+import Footer from './components/Footer'
 
 function App() {
   return (
@@ -10,6 +12,8 @@ function App() {
         <Navbar/>
         <HomePage/>
       </div>
+      <Newsletter/>
+      <Footer/>
     </Router>
   )
 }

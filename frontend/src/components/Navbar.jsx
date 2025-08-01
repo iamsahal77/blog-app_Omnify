@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // Placeholder for auth state
+    const [isLoggedIn, setIsLoggedIn] = useState(false); 
 
     return (
         <nav className="bg-white shadow-md fixed w-full z-20 top-0">
