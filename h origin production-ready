@@ -1,0 +1,5 @@
+[33m19d8490[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mproduction-ready[m[33m, [m[1;31morigin/production-ready[m[33m)[m Force terser installation in build script and disable npm cache
+[33mdebca62[m Add terser dependency and simplify Vite config to fix build issues
+[33mf573d4f[m Add Netlify config, disable minification, and remove package-lock.json to fix terser issue
+[33md7f4bd3[m Remove minify configuration to use Vite defaults and remove terser dependency
+[33m69344b4[m Fix Vite build issue: change minify to esbuild and add terser dependency
