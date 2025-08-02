@@ -23,18 +23,9 @@ export default defineConfig({
     open: true,
   },
   
-  // Build configuration
+  // Build configuration - simplified to avoid terser issues
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: false, // Disable minification to avoid terser issues
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-        },
-      },
-    },
   },
 })
