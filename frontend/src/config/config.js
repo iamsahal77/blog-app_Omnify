@@ -10,8 +10,8 @@ const config = {
   },
 };
 
-// Get current environment - use production for deployed sites
-const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+// Get current environment - use production if API URL is set, otherwise use NODE_ENV
+const environment = process.env.REACT_APP_API_URL ? 'production' : (process.env.NODE_ENV === 'production' ? 'production' : 'development');
 
 // Export current environment config
 export const currentConfig = config[environment] || config.development;

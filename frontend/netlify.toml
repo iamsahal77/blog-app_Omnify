@@ -6,7 +6,7 @@
 [build.environment]
   NODE_VERSION = "18"
   NPM_FLAGS = ""
-  NODE_ENV = "production"
+  NODE_ENV = "development"
   REACT_APP_API_URL = "https://qyqqhtwrtbjdcupvawbs.supabase.co/rest/v1"
   REACT_APP_FRONTEND_URL = "https://omnifyblogss.netlify.app"
 
