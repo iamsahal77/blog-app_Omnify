@@ -1,6 +1,9 @@
-// API service for communicating with Django backend
+// API service for communicating with backend
 import axios from 'axios';
 import { currentConfig } from '../config/config';
+
+// Check if we're using Supabase (production) or Django (development)
+const isSupabase = !!process.env.REACT_APP_API_URL;
 
 // Create axios instance with base configuration
 const API_BASE_URL = currentConfig.API_BASE_URL;
@@ -9,6 +12,10 @@ export const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
+        ...(isSupabase && {
+            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY || '',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY || ''}`
+        })
     },
 });
 
@@ -26,88 +33,285 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor to handle errors
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest = error.config;
-        
-        // Check if error.response exists (network errors don't have response)
-        if (error.response && error.response.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            
-            try {
-                const refreshToken = localStorage.getItem('refresh_token');
-                if (refreshToken) {
-                    const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-                        refresh: refreshToken
-                    });
-                    
-                    const { access } = response.data;
-                    localStorage.setItem('access_token', access);
-                    
-                    originalRequest.headers.Authorization = `Bearer ${access}`;
-                    return api(originalRequest);
-                }
-            } catch (refreshError) {
-                // Refresh token failed, redirect to login
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
-                localStorage.removeItem('user');
-                window.location.href = '/login';
-            }
-        }
-        
+        console.error('API Error:', error);
         return Promise.reject(error);
     }
 );
 
-// Authentication API
-export const authAPI = {
-    // Register new user
-    register: (userData) => api.post('/auth/register/', userData),
-    
-    // Login user
-    login: (credentials) => api.post('/auth/login/', credentials),
-    
-    // Refresh token
-    refreshToken: (refreshToken) => api.post('/auth/refresh/', { refresh: refreshToken }),
-    
-    // Get user profile
-    getProfile: () => api.get('/profile/'),
-    
-    // Update user profile
-    updateProfile: (profileData) => api.patch('/profile/', profileData),
-};
-
-// Blog posts API
+// Blog posts API - handles both Django and Supabase formats
 export const blogAPI = {
     // Get all blog posts with pagination
-    getPosts: (params = {}) => api.get('/posts/', { params }),
+    getPosts: async (params = {}) => {
+        try {
+            if (isSupabase) {
+                // Supabase format
+                const response = await api.get('/posts', { 
+                    params: {
+                        select: '*',
+                        order: 'created_at.desc',
+                        ...params
+                    }
+                });
+                
+                return {
+                    data: {
+                        results: response.data || [],
+                        count: response.data?.length || 0
+                    }
+                };
+            } else {
+                // Django format
+                const response = await api.get('/posts/', { params });
+                return response;
+            }
+        } catch (error) {
+            console.error('Error fetching posts:', error);
+            return {
+                data: {
+                    results: [],
+                    count: 0
+                }
+            };
+        }
+    },
     
     // Get single blog post
-    getPost: (id) => api.get(`/posts/${id}/`),
+    getPost: async (id) => {
+        try {
+            if (isSupabase) {
+                const response = await api.get(`/posts?id=eq.${id}&select=*`);
+                return {
+                    data: response.data?.[0] || null
+                };
+            } else {
+                const response = await api.get(`/posts/${id}/`);
+                return response;
+            }
+        } catch (error) {
+            console.error('Error fetching post:', error);
+            return { data: null };
+        }
+    },
     
     // Create new blog post
-    createPost: (postData) => api.post('/posts/', postData),
+    createPost: (postData) => {
+        if (isSupabase) {
+            return api.post('/posts', postData);
+        } else {
+            return api.post('/posts/', postData);
+        }
+    },
     
     // Update blog post
-    updatePost: (id, postData) => api.put(`/posts/${id}/`, postData),
+    updatePost: (id, postData) => {
+        if (isSupabase) {
+            return api.patch(`/posts?id=eq.${id}`, postData);
+        } else {
+            return api.put(`/posts/${id}/`, postData);
+        }
+    },
     
     // Delete blog post
-    deletePost: (id) => api.delete(`/posts/${id}/`),
+    deletePost: (id) => {
+        if (isSupabase) {
+            return api.delete(`/posts?id=eq.${id}`);
+        } else {
+            return api.delete(`/posts/${id}/`);
+        }
+    },
     
     // Get user's posts
-    getMyPosts: () => api.get('/posts/my/'),
+    getMyPosts: async () => {
+        try {
+            if (isSupabase) {
+                const response = await api.get('/posts', {
+                    params: {
+                        select: '*',
+                        order: 'created_at.desc'
+                    }
+                });
+                return {
+                    data: {
+                        results: response.data || [],
+                        count: response.data?.length || 0
+                    }
+                };
+            } else {
+                const response = await api.get('/posts/my/');
+                return response;
+            }
+        } catch (error) {
+            console.error('Error fetching my posts:', error);
+            return {
+                data: {
+                    results: [],
+                    count: 0
+                }
+            };
+        }
+    },
     
     // Get posts by specific user
-    getUserPosts: (username) => api.get(`/posts/user/${username}/`),
+    getUserPosts: async (username) => {
+        try {
+            if (isSupabase) {
+                const response = await api.get('/posts', {
+                    params: {
+                        select: '*',
+                        author: `eq.${username}`,
+                        order: 'created_at.desc'
+                    }
+                });
+                return {
+                    data: {
+                        results: response.data || [],
+                        count: response.data?.length || 0
+                    }
+                };
+            } else {
+                const response = await api.get(`/posts/user/${username}/`);
+                return response;
+            }
+        } catch (error) {
+            console.error('Error fetching user posts:', error);
+            return {
+                data: {
+                    results: [],
+                    count: 0
+                }
+            };
+        }
+    },
     
     // Search posts
-    searchPosts: (query) => api.get('/search/', { params: { q: query } }),
+    searchPosts: async (query) => {
+        try {
+            if (isSupabase) {
+                const response = await api.get('/posts', {
+                    params: {
+                        select: '*',
+                        or: `title.ilike.%${query}%,content.ilike.%${query}%`,
+                        order: 'created_at.desc'
+                    }
+                });
+                return {
+                    data: {
+                        results: response.data || [],
+                        count: response.data?.length || 0
+                    }
+                };
+            } else {
+                const response = await api.get('/search/', { params: { q: query } });
+                return response;
+            }
+        } catch (error) {
+            console.error('Error searching posts:', error);
+            return {
+                data: {
+                    results: [],
+                    count: 0
+                }
+            };
+        }
+    },
     
     // Get categories
-    getCategories: () => api.get('/categories/'),
+    getCategories: async () => {
+        try {
+            if (isSupabase) {
+                const response = await api.get('/categories', {
+                    params: {
+                        select: '*'
+                    }
+                });
+                return {
+                    data: response.data || []
+                };
+            } else {
+                const response = await api.get('/categories/');
+                return response;
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            return { data: [] };
+        }
+    },
+};
+
+// Authentication API - handles both Django and Supabase formats
+export const authAPI = {
+    // Register new user
+    register: (userData) => {
+        if (isSupabase) {
+            return api.post('/auth/v1/signup', userData);
+        } else {
+            return api.post('/auth/register/', userData);
+        }
+    },
+    
+    // Login user
+    login: async (credentials) => {
+        try {
+            if (isSupabase) {
+                const response = await api.post('/auth/v1/token?grant_type=password', {
+                    email: credentials.email,
+                    password: credentials.password
+                });
+                return response;
+            } else {
+                const response = await api.post('/auth/login/', credentials);
+                return response;
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
+    },
+    
+    // Refresh token
+    refreshToken: (refreshToken) => {
+        if (isSupabase) {
+            return api.post('/auth/v1/token?grant_type=refresh_token', { refresh_token: refreshToken });
+        } else {
+            return api.post('/auth/refresh/', { refresh: refreshToken });
+        }
+    },
+    
+    // Get user profile
+    getProfile: async () => {
+        try {
+            if (isSupabase) {
+                const token = localStorage.getItem('access_token');
+                if (!token) throw new Error('No token');
+                
+                const response = await api.get('/auth/v1/user', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                return response;
+            } else {
+                const response = await api.get('/profile/');
+                return response;
+            }
+        } catch (error) {
+            console.error('Profile error:', error);
+            throw error;
+        }
+    },
+    
+    // Update user profile
+    updateProfile: (profileData) => {
+        if (isSupabase) {
+            return api.put('/auth/v1/user', profileData);
+        } else {
+            return api.patch('/profile/', profileData);
+        }
+    },
 };
 
 // Utility functions
