@@ -6,7 +6,6 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements_production.txt
     startCommand: gunicorn blog_backend.wsgi:application
-    plan: free
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -25,7 +24,6 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
-    plan: free
     envVars:
       - key: REACT_APP_API_URL
         value: https://blog-backend.onrender.com/api
@@ -35,5 +33,4 @@ databases:
   # PostgreSQL Database
   - name: blog-database
     databaseName: blog_db
-    user: blog_user
-    plan: free 
+    user: blog_user 
