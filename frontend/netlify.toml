@@ -5,8 +5,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--no-cache"
-  NODE_ENV = "production"
+  NPM_FLAGS = ""
+  NODE_ENV = "development"
 
 [[redirects]]
   from = "/*"
