@@ -1,10 +1,11 @@
 // API service for communicating with Django backend
 import axios from 'axios';
+import { currentConfig } from '../config/config';
 
 // Create axios instance with base configuration
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = currentConfig.API_BASE_URL;
 
-const api = axios.create({
+export const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
@@ -31,7 +32,8 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
         
-        if (error.response.status === 401 && !originalRequest._retry) {
+        // Check if error.response exists (network errors don't have response)
+        if (error.response && error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             
             try {
@@ -138,6 +140,4 @@ export const apiUtils = {
     setCurrentUser: (user) => {
         localStorage.setItem('user', JSON.stringify(user));
     },
-};
-
-export default api; 
+}; 

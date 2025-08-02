@@ -1,16 +1,19 @@
 // Blog creation page for authenticated users
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { blogAPI } from '../services/api';
 
 const CreateBlog = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         title: '',
         content: '',
+        excerpt: '',
         category: 'Technology'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
+    const [submitError, setSubmitError] = useState('');
 
     // Form validation
     const validateForm = () => {
@@ -36,18 +39,33 @@ const CreateBlog = () => {
         }
 
         setIsSubmitting(true);
+        setSubmitError('');
         
         try {
-            // TODO: Replace with actual API call
-            console.log('Creating blog post:', formData);
+            // Create excerpt from content if not provided
+            const excerpt = formData.excerpt || formData.content.substring(0, 150) + '...';
             
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const postData = {
+                title: formData.title,
+                content: formData.content,
+                excerpt: excerpt,
+                category: formData.category,
+                published: true
+            };
             
-            // Redirect to blog listing
-            navigate('/blog');
+            const response = await blogAPI.createPost(postData);
+            
+            if (response.status === 201) {
+                // Redirect to blog listing
+                navigate('/blog');
+            }
         } catch (error) {
             console.error('Error creating blog post:', error);
+            if (error.response?.data) {
+                setSubmitError(error.response.data.message || 'Failed to create blog post');
+            } else {
+                setSubmitError('An unexpected error occurred. Please try again.');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -66,6 +84,9 @@ const CreateBlog = () => {
                 ...prev,
                 [name]: ''
             }));
+        }
+        if (submitError) {
+            setSubmitError('');
         }
     };
 
@@ -122,6 +143,25 @@ const CreateBlog = () => {
                             </select>
                         </div>
 
+                        {/* Excerpt Field */}
+                        <div>
+                            <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 mb-2">
+                                Excerpt (Optional)
+                            </label>
+                            <textarea
+                                id="excerpt"
+                                name="excerpt"
+                                value={formData.excerpt}
+                                onChange={handleChange}
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                placeholder="Brief description of your post (will be auto-generated from content if left empty)..."
+                            />
+                            <p className="mt-1 text-sm text-gray-500">
+                                Leave empty to auto-generate from content
+                            </p>
+                        </div>
+
                         {/* Content Field */}
                         <div>
                             <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
@@ -145,6 +185,13 @@ const CreateBlog = () => {
                                 {formData.content.length} characters (minimum 50)
                             </p>
                         </div>
+
+                        {/* Error Message */}
+                        {submitError && (
+                            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                                {submitError}
+                            </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
