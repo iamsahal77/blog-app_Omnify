@@ -5,13 +5,13 @@ const config = {
     FRONTEND_URL: 'http://localhost:5173',
   },
   production: {
-    API_BASE_URL: 'https://your-api-domain.com/api',
-    FRONTEND_URL: 'https://your-domain.com',
+    API_BASE_URL: process.env.REACT_APP_API_URL || 'https://your-supabase-project.supabase.co/rest/v1',
+    FRONTEND_URL: process.env.REACT_APP_FRONTEND_URL || 'https://your-domain.com',
   },
 };
 
-// Get current environment
-const environment = 'development'; // Default to development for now
+// Get current environment - use production for deployed sites
+const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
 // Export current environment config
 export const currentConfig = config[environment] || config.development;
