@@ -1,6 +1,6 @@
 import React from 'react';
 
-const AboutPage = () => {
+const About = () => {
     const teamMembers = [
         {
             name: "John Doe",
@@ -119,4 +119,4 @@ const AboutPage = () => {
     );
 };
 
-export default AboutPage; 
+export default About; 

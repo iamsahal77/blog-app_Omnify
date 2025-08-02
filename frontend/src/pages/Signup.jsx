@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const SignupPage = () => {
+const Signup = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -49,4 +49,4 @@ const SignupPage = () => {
     );
 };
 
-export default SignupPage;
+export default Signup;
