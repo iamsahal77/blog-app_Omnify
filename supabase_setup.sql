@@ -10,6 +10,40 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Add missing columns to users table if they don't exist
+DO $$ 
+BEGIN
+    -- Add username column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'username') THEN
+        ALTER TABLE users ADD COLUMN username VARCHAR(100) UNIQUE;
+    END IF;
+    
+    -- Add password column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password') THEN
+        ALTER TABLE users ADD COLUMN password VARCHAR(255);
+    END IF;
+    
+    -- Add first_name column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'first_name') THEN
+        ALTER TABLE users ADD COLUMN first_name VARCHAR(100);
+    END IF;
+    
+    -- Add last_name column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'last_name') THEN
+        ALTER TABLE users ADD COLUMN last_name VARCHAR(100);
+    END IF;
+    
+    -- Add created_at column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'created_at') THEN
+        ALTER TABLE users ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    END IF;
+    
+    -- Add updated_at column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'updated_at') THEN
+        ALTER TABLE users ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    END IF;
+END $$;
+
 -- Add missing columns to blog_posts table if they don't exist
 DO $$ 
 BEGIN
