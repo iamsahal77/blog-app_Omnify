@@ -5,6 +5,38 @@ import { currentConfig } from '../config/config';
 // Check if we're using Supabase (production) or Django (development)
 const isSupabase = !!process.env.REACT_APP_API_URL;
 
+// Add some sample data for when API is unavailable
+const samplePosts = [
+    {
+        id: 1,
+        title: "Welcome to Our Blog",
+        excerpt: "This is a sample blog post to get you started.",
+        content: "This is a sample blog post content. The API might be unavailable or the database might be empty.",
+        author: "Admin",
+        created_at: new Date().toISOString(),
+        read_time: 2,
+        formatted_date: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+    },
+    {
+        id: 2,
+        title: "Getting Started with Blogging",
+        excerpt: "Learn how to create your first blog post.",
+        content: "Creating your first blog post is easy. Just click the 'Create Blog' button and start writing!",
+        author: "Admin",
+        created_at: new Date().toISOString(),
+        read_time: 3,
+        formatted_date: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+    }
+];
+
 // Create axios instance with base configuration
 const API_BASE_URL = currentConfig.API_BASE_URL;
 
@@ -49,6 +81,7 @@ export const blogAPI = {
         try {
             if (isSupabase) {
                 // Supabase format
+                console.log('🔍 Fetching posts from Supabase...');
                 const response = await api.get('/posts', { 
                     params: {
                         select: '*',
@@ -57,10 +90,18 @@ export const blogAPI = {
                     }
                 });
                 
+                console.log('📦 Supabase response:', response);
+                console.log('📦 Response data:', response.data);
+                console.log('📦 Response data type:', typeof response.data);
+                console.log('📦 Is array?', Array.isArray(response.data));
+                
+                // Ensure we always return an array
+                const posts = Array.isArray(response.data) ? response.data : [];
+                
                 return {
                     data: {
-                        results: response.data || [],
-                        count: response.data?.length || 0
+                        results: posts,
+                        count: posts.length
                     }
                 };
             } else {
@@ -69,11 +110,13 @@ export const blogAPI = {
                 return response;
             }
         } catch (error) {
-            console.error('Error fetching posts:', error);
+            console.error('❌ Error fetching posts:', error);
+            console.error('❌ Error response:', error.response);
+            console.log('🔄 Using sample data as fallback...');
             return {
                 data: {
-                    results: [],
-                    count: 0
+                    results: samplePosts,
+                    count: samplePosts.length
                 }
             };
         }
