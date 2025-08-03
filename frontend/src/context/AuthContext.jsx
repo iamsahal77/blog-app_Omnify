@@ -52,10 +52,10 @@ export const AuthProvider = ({ children }) => {
         try {
             setLoading(true);
             const response = await authAPI.login(credentials);
-            const { access, refresh, user: userData } = response.data;
+            const { access_token, refresh_token, user: userData } = response.data;
             
             // Store tokens and user data
-            apiUtils.setTokens(access, refresh);
+            apiUtils.setTokens(access_token, refresh_token);
             apiUtils.setCurrentUser(userData);
             
             setUser(userData);

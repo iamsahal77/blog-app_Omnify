@@ -227,6 +227,8 @@ export const blogAPI = {
             if (isSupabase()) {
                 // Get current user to set as author
                 const currentUser = apiUtils.getCurrentUser();
+                console.log('🔍 Creating post - Current user:', currentUser);
+                
                 if (!currentUser || !currentUser.id) {
                     throw new Error('User not authenticated. Please log in to create a post.');
                 }
@@ -239,6 +241,8 @@ export const blogAPI = {
                     updated_at: new Date().toISOString()
                 };
                 
+                console.log('🔍 Creating post - Post data with author:', postDataWithAuthor);
+                
                 const response = await api.post('/blog_posts', postDataWithAuthor);
                 return response;
             } else {
@@ -247,6 +251,10 @@ export const blogAPI = {
             }
         } catch (error) {
             console.error('Error creating blog post:', error);
+            if (error.response?.status === 409) {
+                console.error('🔍 409 Conflict - Error details:', error.response.data);
+                throw new Error('Blog post creation failed. This might be due to a duplicate entry or database constraint.');
+            }
             throw error;
         }
     },
