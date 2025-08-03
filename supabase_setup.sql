@@ -1,6 +1,6 @@
 -- Create a new auth_users table for authentication (to avoid conflicts with existing users table)
 CREATE TABLE IF NOT EXISTS auth_users (
-    id SERIAL PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     username VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS auth_users (
 -- Add missing columns to blog_posts table if they don't exist
 DO $$ 
 BEGIN
-    -- Add author_id column if it doesn't exist
+    -- Add author_id column if it doesn't exist (use UUID to match existing structure)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'blog_posts' AND column_name = 'author_id') THEN
-        ALTER TABLE blog_posts ADD COLUMN author_id INTEGER REFERENCES auth_users(id);
+        ALTER TABLE blog_posts ADD COLUMN author_id UUID REFERENCES auth_users(id);
     END IF;
     
     -- Add category column if it doesn't exist
@@ -94,9 +94,36 @@ INSERT INTO auth_users (email, username, password, first_name, last_name) VALUES
 ('jane@example.com', 'jane_smith', 'password123', 'Jane', 'Smith')
 ON CONFLICT (email) DO NOTHING;
 
--- Insert sample blog posts (only if they don't exist)
-INSERT INTO blog_posts (title, excerpt, content, author_id, category, read_time) VALUES
-('Getting Started with React', 'Learn the basics of React development', 'React is a powerful JavaScript library for building user interfaces. It allows you to create reusable UI components and manage state efficiently. In this tutorial, we will cover the fundamentals of React including components, props, state, and lifecycle methods.', 1, 'Programming', 5),
-('Django Best Practices', 'Essential tips for Django development', 'Django is a high-level Python web framework that encourages rapid development and clean, pragmatic design. This article covers best practices for Django development including project structure, security considerations, and performance optimization techniques.', 2, 'Programming', 8),
-('Modern Web Development', 'Trends and technologies in 2024', 'The web development landscape is constantly evolving with new frameworks, tools, and methodologies emerging regularly. This comprehensive guide explores the latest trends in web development including serverless architecture, microservices, and modern frontend frameworks.', 3, 'Technology', 6)
+-- Insert sample blog posts (only if they don't exist) - use the first user's UUID
+INSERT INTO blog_posts (title, excerpt, content, author_id, category, read_time) 
+SELECT 
+    'Getting Started with React',
+    'Learn the basics of React development',
+    'React is a powerful JavaScript library for building user interfaces. It allows you to create reusable UI components and manage state efficiently. In this tutorial, we will cover the fundamentals of React including components, props, state, and lifecycle methods.',
+    id,
+    'Programming',
+    5
+FROM auth_users WHERE email = 'admin@example.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO blog_posts (title, excerpt, content, author_id, category, read_time) 
+SELECT 
+    'Django Best Practices',
+    'Essential tips for Django development',
+    'Django is a high-level Python web framework that encourages rapid development and clean, pragmatic design. This article covers best practices for Django development including project structure, security considerations, and performance optimization techniques.',
+    id,
+    'Programming',
+    8
+FROM auth_users WHERE email = 'john@example.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO blog_posts (title, excerpt, content, author_id, category, read_time) 
+SELECT 
+    'Modern Web Development',
+    'Trends and technologies in 2024',
+    'The web development landscape is constantly evolving with new frameworks, tools, and methodologies emerging regularly. This comprehensive guide explores the latest trends in web development including serverless architecture, microservices, and modern frontend frameworks.',
+    id,
+    'Technology',
+    6
+FROM auth_users WHERE email = 'jane@example.com'
 ON CONFLICT DO NOTHING; 
