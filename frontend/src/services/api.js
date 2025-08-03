@@ -58,8 +58,8 @@ export const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
         ...(isSupabase && {
-            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY || '',
-            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY || ''}`
+            'apikey': (process.env.REACT_APP_SUPABASE_ANON_KEY || '').replace(/^["']+|["']+$/g, ''),
+            'Authorization': `Bearer ${(process.env.REACT_APP_SUPABASE_ANON_KEY || '').replace(/^["']+|["']+$/g, '')}`
         })
     },
 });
@@ -104,19 +104,21 @@ export const blogAPI = {
                 });
                 
                 // Check if we have a valid API key
-                if (!process.env.REACT_APP_SUPABASE_ANON_KEY) {
-                    console.error('❌ No Supabase API key found');
-                    throw new Error('No Supabase API key configured');
-                }
-                
-                // Log the actual API key being used (first and last 10 chars for security)
-                const apiKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-                console.log('🔑 API Key Debug:', {
-                    length: apiKey.length,
-                    start: apiKey.substring(0, 10),
-                    end: apiKey.substring(apiKey.length - 10),
-                    isValidJWT: apiKey.split('.').length === 3
-                });
+if (!process.env.REACT_APP_SUPABASE_ANON_KEY) {
+    console.error('❌ No Supabase API key found');
+    throw new Error('No Supabase API key configured');
+}
+
+// Clean the API key - remove any surrounding quotes
+const apiKey = process.env.REACT_APP_SUPABASE_ANON_KEY.replace(/^["']+|["']+$/g, '');
+console.log('🔑 API Key Debug:', {
+    originalLength: process.env.REACT_APP_SUPABASE_ANON_KEY.length,
+    cleanedLength: apiKey.length,
+    start: apiKey.substring(0, 10),
+    end: apiKey.substring(apiKey.length - 10),
+    isValidJWT: apiKey.split('.').length === 3,
+    hadQuotes: process.env.REACT_APP_SUPABASE_ANON_KEY !== apiKey
+});
                 
                 const response = await api.get('/blog_posts', { 
                     params: {
