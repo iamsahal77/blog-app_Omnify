@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }) => {
             console.error('Registration failed:', error);
             return { 
                 success: false, 
-                error: error.response?.data || 'Registration failed' 
+                error: error.message || 'Registration failed. Please try again.' 
             };
         } finally {
             setLoading(false);

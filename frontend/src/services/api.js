@@ -366,6 +366,18 @@ export const authAPI = {
     register: async (userData) => {
         try {
             if (isSupabase) {
+                // First check if user already exists
+                const existingUserResponse = await api.get('/auth_users', {
+                    params: {
+                        email: `eq.${userData.email}`,
+                        select: 'id'
+                    }
+                });
+                
+                if (existingUserResponse.data && existingUserResponse.data.length > 0) {
+                    throw new Error('User with this email already exists. Please use a different email or try logging in.');
+                }
+                
                 // For Supabase, we'll create a simple user registration
                 // This uses the 'auth_users' table in your Supabase database
                 const response = await api.post('/auth_users', {
@@ -389,7 +401,14 @@ export const authAPI = {
             }
         } catch (error) {
             console.error('Registration error:', error);
-            throw error;
+            // Provide better error messages
+            if (error.response?.status === 409) {
+                throw new Error('User with this email already exists. Please use a different email or try logging in.');
+            } else if (error.message) {
+                throw error;
+            } else {
+                throw new Error('Registration failed. Please try again.');
+            }
         }
     },
     
