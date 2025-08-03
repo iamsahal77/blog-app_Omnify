@@ -12,28 +12,18 @@ const samplePosts = [
         title: "Welcome to Our Blog",
         excerpt: "This is a sample blog post to get you started.",
         content: "This is a sample blog post content. The API might be unavailable or the database might be empty.",
-        author: "Admin",
+        author_id: "sample-user-id",
         created_at: new Date().toISOString(),
-        read_time: 2,
-        formatted_date: new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        })
+        updated_at: new Date().toISOString()
     },
     {
         id: 2,
         title: "Getting Started with Blogging",
         excerpt: "Learn how to create your first blog post.",
         content: "Creating your first blog post is easy. Just click the 'Create Blog' button and start writing!",
-        author: "Admin",
+        author_id: "sample-user-id",
         created_at: new Date().toISOString(),
-        read_time: 3,
-        formatted_date: new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        })
+        updated_at: new Date().toISOString()
     }
 ];
 
@@ -84,8 +74,13 @@ export const blogAPI = {
                 console.log('🔍 Fetching posts from Supabase...');
                 console.log('🔍 API URL:', API_BASE_URL);
                 console.log('🔍 Is Supabase:', isSupabase);
+                console.log('🔍 Environment Variables:', {
+                    REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+                    REACT_APP_SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+                    NODE_ENV: process.env.NODE_ENV
+                });
                 
-                const response = await api.get('/posts', { 
+                const response = await api.get('/blog_posts', { 
                     params: {
                         select: '*',
                         order: 'created_at.desc',
@@ -145,7 +140,7 @@ export const blogAPI = {
     getPost: async (id) => {
         try {
             if (isSupabase) {
-                const response = await api.get(`/posts?id=eq.${id}&select=*`);
+                const response = await api.get(`/blog_posts?id=eq.${id}&select=*`);
                 return {
                     data: response.data?.[0] || null
                 };
@@ -162,7 +157,7 @@ export const blogAPI = {
     // Create new blog post
     createPost: (postData) => {
         if (isSupabase) {
-            return api.post('/posts', postData);
+            return api.post('/blog_posts', postData);
         } else {
             return api.post('/posts/', postData);
         }
@@ -171,7 +166,7 @@ export const blogAPI = {
     // Update blog post
     updatePost: (id, postData) => {
         if (isSupabase) {
-            return api.patch(`/posts?id=eq.${id}`, postData);
+            return api.patch(`/blog_posts?id=eq.${id}`, postData);
         } else {
             return api.put(`/posts/${id}/`, postData);
         }
@@ -180,7 +175,7 @@ export const blogAPI = {
     // Delete blog post
     deletePost: (id) => {
         if (isSupabase) {
-            return api.delete(`/posts?id=eq.${id}`);
+            return api.delete(`/blog_posts?id=eq.${id}`);
         } else {
             return api.delete(`/posts/${id}/`);
         }
@@ -190,7 +185,7 @@ export const blogAPI = {
     getMyPosts: async () => {
         try {
             if (isSupabase) {
-                const response = await api.get('/posts', {
+                const response = await api.get('/blog_posts', {
                     params: {
                         select: '*',
                         order: 'created_at.desc'
@@ -221,10 +216,10 @@ export const blogAPI = {
     getUserPosts: async (username) => {
         try {
             if (isSupabase) {
-                const response = await api.get('/posts', {
+                const response = await api.get('/blog_posts', {
                     params: {
                         select: '*',
-                        author: `eq.${username}`,
+                        author_id: `eq.${username}`,
                         order: 'created_at.desc'
                     }
                 });
@@ -253,7 +248,7 @@ export const blogAPI = {
     searchPosts: async (query) => {
         try {
             if (isSupabase) {
-                const response = await api.get('/posts', {
+                const response = await api.get('/blog_posts', {
                     params: {
                         select: '*',
                         or: `title.ilike.%${query}%,content.ilike.%${query}%`,
@@ -281,17 +276,19 @@ export const blogAPI = {
         }
     },
     
-    // Get categories
+    // Get categories (not available in current Supabase schema)
     getCategories: async () => {
         try {
             if (isSupabase) {
-                const response = await api.get('/categories', {
-                    params: {
-                        select: '*'
-                    }
-                });
+                // Return static categories since no categories table exists
                 return {
-                    data: response.data || []
+                    data: [
+                        { id: 1, name: 'Technology', description: 'Posts about technology and programming' },
+                        { id: 2, name: 'Lifestyle', description: 'Posts about lifestyle and personal development' },
+                        { id: 3, name: 'Programming', description: 'Programming tutorials and guides' },
+                        { id: 4, name: 'Design', description: 'Design related posts' },
+                        { id: 5, name: 'Business', description: 'Business and entrepreneurship' }
+                    ]
                 };
             } else {
                 const response = await api.get('/categories/');
