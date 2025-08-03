@@ -112,16 +112,16 @@ CREATE POLICY "Allow users to update their own data" ON auth_users
 CREATE POLICY "Allow anonymous read access to published posts" ON blog_posts
     FOR SELECT USING (published = true);
 
--- Allow authenticated users to create posts
-CREATE POLICY "Allow authenticated users to create posts" ON blog_posts
+-- Allow all users to create posts (for now, since we're using custom auth)
+CREATE POLICY "Allow all users to create posts" ON blog_posts
     FOR INSERT WITH CHECK (true);
 
--- Allow users to update their own posts
-CREATE POLICY "Allow users to update their own posts" ON blog_posts
+-- Allow users to update their own posts (relaxed for custom auth)
+CREATE POLICY "Allow users to update posts" ON blog_posts
     FOR UPDATE USING (true);
 
--- Allow users to delete their own posts
-CREATE POLICY "Allow users to delete their own posts" ON blog_posts
+-- Allow users to delete their own posts (relaxed for custom auth)
+CREATE POLICY "Allow users to delete posts" ON blog_posts
     FOR DELETE USING (true);
 
 -- Clear existing data to avoid conflicts

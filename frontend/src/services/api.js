@@ -214,11 +214,32 @@ console.log('🔑 API Key Debug:', {
     },
     
     // Create new blog post
-    createPost: (postData) => {
-        if (isSupabase) {
-            return api.post('/blog_posts', postData);
-        } else {
-            return api.post('/posts/', postData);
+    createPost: async (postData) => {
+        try {
+            if (isSupabase) {
+                // Get current user to set as author
+                const currentUser = apiUtils.getCurrentUser();
+                if (!currentUser || !currentUser.id) {
+                    throw new Error('User not authenticated. Please log in to create a post.');
+                }
+                
+                // Add author_id to the post data
+                const postDataWithAuthor = {
+                    ...postData,
+                    author_id: currentUser.id,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const response = await api.post('/blog_posts', postDataWithAuthor);
+                return response;
+            } else {
+                const response = await api.post('/posts/', postData);
+                return response;
+            }
+        } catch (error) {
+            console.error('Error creating blog post:', error);
+            throw error;
         }
     },
     
