@@ -363,11 +363,33 @@ console.log('🔑 API Key Debug:', {
 // Authentication API - handles both Django and Supabase formats
 export const authAPI = {
     // Register new user
-    register: (userData) => {
-        if (isSupabase) {
-            return api.post('/auth/v1/signup', userData);
-        } else {
-            return api.post('/auth/register/', userData);
+    register: async (userData) => {
+        try {
+            if (isSupabase) {
+                // For Supabase, we'll create a simple user registration
+                // This assumes you have a 'users' table in your Supabase database
+                const response = await api.post('/users', {
+                    email: userData.email,
+                    username: userData.username || userData.email.split('@')[0],
+                    password: userData.password, // In production, this should be hashed
+                    created_at: new Date().toISOString()
+                });
+                
+                // Return a mock token for now
+                return {
+                    data: {
+                        user: response.data,
+                        access_token: 'mock_token_' + Date.now(),
+                        refresh_token: 'mock_refresh_token_' + Date.now()
+                    }
+                };
+            } else {
+                const response = await api.post('/auth/register/', userData);
+                return response;
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            throw error;
         }
     },
     
@@ -375,11 +397,31 @@ export const authAPI = {
     login: async (credentials) => {
         try {
             if (isSupabase) {
-                const response = await api.post('/auth/v1/token?grant_type=password', {
-                    email: credentials.email,
-                    password: credentials.password
+                // For Supabase, we'll check if user exists in the users table
+                const response = await api.get('/users', {
+                    params: {
+                        email: `eq.${credentials.email}`,
+                        select: '*'
+                    }
                 });
-                return response;
+                
+                if (response.data && response.data.length > 0) {
+                    const user = response.data[0];
+                    // In production, you should verify the password hash
+                    if (user.password === credentials.password) {
+                        return {
+                            data: {
+                                user: user,
+                                access_token: 'mock_token_' + Date.now(),
+                                refresh_token: 'mock_refresh_token_' + Date.now()
+                            }
+                        };
+                    } else {
+                        throw new Error('Invalid credentials');
+                    }
+                } else {
+                    throw new Error('User not found');
+                }
             } else {
                 const response = await api.post('/auth/login/', credentials);
                 return response;
