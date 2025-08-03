@@ -1,61 +1,21 @@
--- Check if users table exists and create it if it doesn't
-DO $$ 
-BEGIN
-    IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users') THEN
-        -- Create users table for authentication
-        CREATE TABLE users (
-            id SERIAL PRIMARY KEY,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            username VARCHAR(100) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            first_name VARCHAR(100),
-            last_name VARCHAR(100),
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-    END IF;
-END $$;
-
--- Add missing columns to users table if they don't exist
-DO $$ 
-BEGIN
-    -- Add username column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'username') THEN
-        ALTER TABLE users ADD COLUMN username VARCHAR(100) UNIQUE;
-    END IF;
-    
-    -- Add password column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password') THEN
-        ALTER TABLE users ADD COLUMN password VARCHAR(255);
-    END IF;
-    
-    -- Add first_name column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'first_name') THEN
-        ALTER TABLE users ADD COLUMN first_name VARCHAR(100);
-    END IF;
-    
-    -- Add last_name column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'last_name') THEN
-        ALTER TABLE users ADD COLUMN last_name VARCHAR(100);
-    END IF;
-    
-    -- Add created_at column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'created_at') THEN
-        ALTER TABLE users ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
-    END IF;
-    
-    -- Add updated_at column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'updated_at') THEN
-        ALTER TABLE users ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
-    END IF;
-END $$;
+-- Create a new auth_users table for authentication (to avoid conflicts with existing users table)
+CREATE TABLE IF NOT EXISTS auth_users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
 -- Add missing columns to blog_posts table if they don't exist
 DO $$ 
 BEGIN
     -- Add author_id column if it doesn't exist
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'blog_posts' AND column_name = 'author_id') THEN
-        ALTER TABLE blog_posts ADD COLUMN author_id INTEGER REFERENCES users(id);
+        ALTER TABLE blog_posts ADD COLUMN author_id INTEGER REFERENCES auth_users(id);
     END IF;
     
     -- Add category column if it doesn't exist
@@ -85,29 +45,29 @@ BEGIN
 END $$;
 
 -- Enable Row Level Security (RLS) if not already enabled
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auth_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if they exist (to avoid conflicts)
-DROP POLICY IF EXISTS "Allow anonymous read access to users" ON users;
-DROP POLICY IF EXISTS "Allow users to insert their own data" ON users;
-DROP POLICY IF EXISTS "Allow users to update their own data" ON users;
+DROP POLICY IF EXISTS "Allow anonymous read access to auth_users" ON auth_users;
+DROP POLICY IF EXISTS "Allow users to insert their own data" ON auth_users;
+DROP POLICY IF EXISTS "Allow users to update their own data" ON auth_users;
 DROP POLICY IF EXISTS "Allow anonymous read access to published posts" ON blog_posts;
 DROP POLICY IF EXISTS "Allow authenticated users to create posts" ON blog_posts;
 DROP POLICY IF EXISTS "Allow users to update their own posts" ON blog_posts;
 DROP POLICY IF EXISTS "Allow users to delete their own posts" ON blog_posts;
 
--- Create policies for users table
+-- Create policies for auth_users table
 -- Allow anonymous users to read user profiles
-CREATE POLICY "Allow anonymous read access to users" ON users
+CREATE POLICY "Allow anonymous read access to auth_users" ON auth_users
     FOR SELECT USING (true);
 
 -- Allow users to insert their own data (for registration)
-CREATE POLICY "Allow users to insert their own data" ON users
+CREATE POLICY "Allow users to insert their own data" ON auth_users
     FOR INSERT WITH CHECK (true);
 
 -- Allow users to update their own data
-CREATE POLICY "Allow users to update their own data" ON users
+CREATE POLICY "Allow users to update their own data" ON auth_users
     FOR UPDATE USING (true);
 
 -- Create policies for blog_posts table
@@ -121,14 +81,14 @@ CREATE POLICY "Allow authenticated users to create posts" ON blog_posts
 
 -- Allow users to update their own posts
 CREATE POLICY "Allow users to update their own posts" ON blog_posts
-    FOR UPDATE USING (author_id = (SELECT id FROM users WHERE email = current_user));
+    FOR UPDATE USING (author_id = (SELECT id FROM auth_users WHERE email = current_user));
 
 -- Allow users to delete their own posts
 CREATE POLICY "Allow users to delete their own posts" ON blog_posts
-    FOR DELETE USING (author_id = (SELECT id FROM users WHERE email = current_user));
+    FOR DELETE USING (author_id = (SELECT id FROM auth_users WHERE email = current_user));
 
--- Insert sample users (only if they don't exist) - let the database handle the ID
-INSERT INTO users (email, username, password, first_name, last_name) VALUES
+-- Insert sample users (only if they don't exist)
+INSERT INTO auth_users (email, username, password, first_name, last_name) VALUES
 ('admin@example.com', 'admin', 'password123', 'Admin', 'User'),
 ('john@example.com', 'john_doe', 'password123', 'John', 'Doe'),
 ('jane@example.com', 'jane_smith', 'password123', 'Jane', 'Smith')

@@ -367,8 +367,8 @@ export const authAPI = {
         try {
             if (isSupabase) {
                 // For Supabase, we'll create a simple user registration
-                // This assumes you have a 'users' table in your Supabase database
-                const response = await api.post('/users', {
+                // This uses the 'auth_users' table in your Supabase database
+                const response = await api.post('/auth_users', {
                     email: userData.email,
                     username: userData.username || userData.email.split('@')[0],
                     password: userData.password, // In production, this should be hashed
@@ -397,8 +397,8 @@ export const authAPI = {
     login: async (credentials) => {
         try {
             if (isSupabase) {
-                // For Supabase, we'll check if user exists in the users table
-                const response = await api.get('/users', {
+                // For Supabase, we'll check if user exists in the auth_users table
+                const response = await api.get('/auth_users', {
                     params: {
                         email: `eq.${credentials.email}`,
                         select: '*'
