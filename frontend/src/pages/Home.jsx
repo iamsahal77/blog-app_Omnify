@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { blogAPI } from '../services/api';
+import ApiTest from '../components/ApiTest';
 
 // Hero section component with main call-to-action
 const Hero = () => (
@@ -145,6 +146,7 @@ const FeaturedPosts = () => {
 
 const Home = () => (
     <>
+        <ApiTest />
         <Hero />
         <FeaturedPosts />
     </>

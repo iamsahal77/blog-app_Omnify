@@ -14,6 +14,13 @@ import Footer from './components/Footer'
 import ErrorBoundary from './components/ErrorBoundary'
 import { AuthProvider } from './context/AuthContext'
 
+// Debug environment variables
+console.log('🔍 App.jsx - Environment Variables:', {
+  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  REACT_APP_SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+  NODE_ENV: process.env.NODE_ENV
+});
+
 function App() {
   return (
     <ErrorBoundary>
