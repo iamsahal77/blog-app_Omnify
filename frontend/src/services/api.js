@@ -465,14 +465,29 @@ export const authAPI = {
         try {
             if (isSupabase) {
                 const token = localStorage.getItem('access_token');
-                if (!token) throw new Error('No token');
-                
-                const response = await api.get('/auth/v1/user', {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                if (!token) {
+                    // If no token, try to get user from localStorage
+                    const currentUser = apiUtils.getCurrentUser();
+                    if (currentUser) {
+                        return {
+                            data: {
+                                user: currentUser
+                            }
+                        };
                     }
-                });
-                return response;
+                    throw new Error('No token and no user found');
+                }
+                
+                // For Supabase, we'll fetch the user from the auth_users table
+                const currentUser = apiUtils.getCurrentUser();
+                if (!currentUser || !currentUser.id) throw new Error('No current user found');
+                
+                const response = await api.get(`/auth_users?id=eq.${currentUser.id}&select=*`);
+                return {
+                    data: {
+                        user: response.data?.[0] || currentUser
+                    }
+                };
             } else {
                 const response = await api.get('/profile/');
                 return response;

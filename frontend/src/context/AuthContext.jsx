@@ -52,11 +52,7 @@ export const AuthProvider = ({ children }) => {
         try {
             setLoading(true);
             const response = await authAPI.login(credentials);
-            const { access, refresh } = response.data;
-            
-            // Get user profile
-            const profileResponse = await authAPI.getProfile();
-            const userData = profileResponse.data.user;
+            const { access, refresh, user: userData } = response.data;
             
             // Store tokens and user data
             apiUtils.setTokens(access, refresh);
@@ -70,7 +66,7 @@ export const AuthProvider = ({ children }) => {
             console.error('Login failed:', error);
             return { 
                 success: false, 
-                error: error.response?.data?.detail || 'Login failed' 
+                error: error.message || 'Login failed' 
             };
         } finally {
             setLoading(false);
