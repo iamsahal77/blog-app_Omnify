@@ -120,11 +120,21 @@ console.log('🔑 API Key Debug:', {
     hadQuotes: process.env.REACT_APP_SUPABASE_ANON_KEY !== apiKey
 });
                 
+                // Remove page_size from params as it's not supported by Supabase
+                const { page_size, ...supabaseParams } = params;
+                
+                // For Supabase, we need to handle pagination differently
+                // If limit is provided, use it directly
+                if (supabaseParams.limit) {
+                    // Supabase uses 'limit' parameter directly
+                    console.log('🔍 Using limit parameter for Supabase:', supabaseParams.limit);
+                }
+                
                 const response = await api.get('/blog_posts', { 
                     params: {
                         select: '*',
                         order: 'created_at.desc',
-                        ...params
+                        ...supabaseParams
                     }
                 });
                 

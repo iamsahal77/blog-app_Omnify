@@ -27,7 +27,7 @@ const FeaturedPosts = () => {
             try {
                 setLoading(true);
                 // Fetch latest 3 posts for featured section
-                const response = await blogAPI.getPosts({ page_size: 3 });
+                const response = await blogAPI.getPosts({ limit: 3 });
                 setPosts(response.data.results || response.data);
             } catch (error) {
                 console.error('Error fetching featured posts:', error);

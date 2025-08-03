@@ -22,7 +22,7 @@ const Blog = () => {
             
             const params = {
                 page: page,
-                page_size: postsPerPage,
+                limit: postsPerPage,
             };
             
             if (search) {
