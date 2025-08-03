@@ -6,14 +6,24 @@ const getApiBaseUrl = () => {
     const apiUrl = process.env.REACT_APP_API_URL;
     if (apiUrl) {
         // Remove any surrounding quotes that Netlify might add
-        return apiUrl.replace(/^["']+|["']+$/g, '');
+        const cleanedUrl = apiUrl.replace(/^["']+|["']+$/g, '');
+        console.log('🔧 API URL Debug:', {
+            original: apiUrl,
+            cleaned: cleanedUrl,
+            hadQuotes: apiUrl !== cleanedUrl
+        });
+        return cleanedUrl;
     }
     return 'http://localhost:8000/api';
 };
 
 // Check if we're using Supabase
-const isSupabase = process.env.REACT_APP_API_URL && 
-    process.env.REACT_APP_API_URL.includes('supabase.co');
+const isSupabase = () => {
+    const apiUrl = process.env.REACT_APP_API_URL;
+    if (!apiUrl) return false;
+    const cleanedUrl = apiUrl.replace(/^["']+|["']+$/g, '');
+    return cleanedUrl.includes('supabase.co');
+};
 
 // Get cleaned API key
 const getCleanedApiKey = () => {
@@ -50,7 +60,7 @@ export const api = axios.create({
     baseURL: getApiBaseUrl(),
     headers: {
         'Content-Type': 'application/json',
-        ...(isSupabase && {
+        ...(isSupabase() && {
             'apikey': getCleanedApiKey(),
             'Authorization': `Bearer ${getCleanedApiKey()}`
         })
@@ -58,7 +68,7 @@ export const api = axios.create({
 });
 
 // Debug Supabase configuration
-if (isSupabase) {
+if (isSupabase()) {
     const originalKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
     const cleanedKey = getCleanedApiKey();
     console.log('🔧 Supabase Configuration:', {
@@ -69,17 +79,44 @@ if (isSupabase) {
         apiKeyStart: cleanedKey.substring(0, 20) + '...',
         apiKeyEnd: '...' + cleanedKey.substring(cleanedKey.length - 20),
         hadQuotes: originalKey !== cleanedKey,
-        isValidJWT: cleanedKey.split('.').length === 3
+        isValidJWT: cleanedKey.split('.').length === 3,
+        fullCleanedKey: cleanedKey // Show the full key for debugging
     });
+    
+    // Test the API key format
+    if (cleanedKey.split('.').length !== 3) {
+        console.error('❌ Invalid JWT format - API key should have 3 parts separated by dots');
+    }
+    
+    // Check if the key starts with the expected format
+    if (!cleanedKey.startsWith('eyJ')) {
+        console.error('❌ Invalid API key format - should start with "eyJ"');
+    }
 }
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and log requests
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
-        if (token) {
+        if (token && !isSupabase()) {
+            // Only add user token for Django backend, not for Supabase
             config.headers.Authorization = `Bearer ${token}`;
         }
+        
+        // Log request details for debugging
+        if (isSupabase()) {
+            console.log('🔍 Supabase Request:', {
+                url: config.url,
+                method: config.method,
+                headers: {
+                    'apikey': config.headers.apikey ? 'SET' : 'NOT SET',
+                    'Authorization': config.headers.Authorization ? 'SET' : 'NOT SET',
+                    'Content-Type': config.headers['Content-Type']
+                },
+                params: config.params
+            });
+        }
+        
         return config;
     },
     (error) => {
@@ -101,7 +138,7 @@ export const blogAPI = {
     // Get blog posts with pagination and search
     getPosts: async (params = {}) => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 // Supabase format
                 console.log('🔍 Fetching posts from Supabase...');
                 
@@ -169,7 +206,7 @@ export const blogAPI = {
     // Get single blog post
     getPost: async (id) => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 const response = await api.get(`/blog_posts?id=eq.${id}&select=*`);
                 return {
                     data: response.data?.[0] || null
@@ -187,7 +224,7 @@ export const blogAPI = {
     // Create new blog post
     createPost: async (postData) => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 // Get current user to set as author
                 const currentUser = apiUtils.getCurrentUser();
                 if (!currentUser || !currentUser.id) {
@@ -216,7 +253,7 @@ export const blogAPI = {
     
     // Update blog post
     updatePost: (id, postData) => {
-        if (isSupabase) {
+        if (isSupabase()) {
             return api.patch(`/blog_posts?id=eq.${id}`, postData);
         } else {
             return api.put(`/posts/${id}/`, postData);
@@ -225,7 +262,7 @@ export const blogAPI = {
     
     // Delete blog post
     deletePost: (id) => {
-        if (isSupabase) {
+        if (isSupabase()) {
             return api.delete(`/blog_posts?id=eq.${id}`);
         } else {
             return api.delete(`/posts/${id}/`);
@@ -235,7 +272,7 @@ export const blogAPI = {
     // Get user's posts
     getMyPosts: async () => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 const response = await api.get('/blog_posts', {
                     params: {
                         select: '*',
@@ -266,7 +303,7 @@ export const blogAPI = {
     // Get posts by specific user
     getUserPosts: async (username) => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 const response = await api.get('/blog_posts', {
                     params: {
                         select: '*',
@@ -298,7 +335,7 @@ export const blogAPI = {
     // Search posts
     searchPosts: async (query) => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 const response = await api.get('/blog_posts', {
                     params: {
                         select: '*',
@@ -330,7 +367,7 @@ export const blogAPI = {
     // Get categories (not available in current Supabase schema)
     getCategories: async () => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 // Return static categories since no categories table exists
                 return {
                     data: [
@@ -357,7 +394,7 @@ export const authAPI = {
     // Register new user
     register: async (userData) => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 // First check if user already exists
                 const existingUserResponse = await api.get('/auth_users', {
                     params: {
@@ -407,7 +444,7 @@ export const authAPI = {
     // Login user
     login: async (credentials) => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 // For Supabase, we'll check if user exists in the auth_users table
                 const response = await api.get('/auth_users', {
                     params: {
@@ -445,7 +482,7 @@ export const authAPI = {
     
     // Refresh token
     refreshToken: (refreshToken) => {
-        if (isSupabase) {
+        if (isSupabase()) {
             return api.post('/auth/v1/token?grant_type=refresh_token', { refresh_token: refreshToken });
         } else {
             return api.post('/auth/refresh/', { refresh: refreshToken });
@@ -455,7 +492,7 @@ export const authAPI = {
     // Get user profile
     getProfile: async () => {
         try {
-            if (isSupabase) {
+            if (isSupabase()) {
                 const token = localStorage.getItem('access_token');
                 if (!token) {
                     // If no token, try to get user from localStorage
@@ -492,7 +529,7 @@ export const authAPI = {
     
     // Update user profile
     updateProfile: (profileData) => {
-        if (isSupabase) {
+        if (isSupabase()) {
             return api.put('/auth/v1/user', profileData);
         } else {
             return api.patch('/profile/', profileData);

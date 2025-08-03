@@ -8,6 +8,7 @@
   NPM_FLAGS = ""
   NODE_ENV = "production"
   REACT_APP_API_URL = "https://qyqqhtwrtbjdcupvawbs.supabase.co/rest/v1"
+
   REACT_APP_FRONTEND_URL = "https://omnifyblogss.netlify.app"
 
 [[redirects]]
