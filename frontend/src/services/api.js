@@ -233,6 +233,12 @@ export const blogAPI = {
                     throw new Error('User not authenticated. Please log in to create a post.');
                 }
                 
+                // Check if user exists in database
+                const userExists = await apiUtils.checkUserExists(currentUser.id);
+                if (!userExists) {
+                    throw new Error('User not found in database. Please log in again.');
+                }
+                
                 // Add author_id to the post data
                 const postDataWithAuthor = {
                     ...postData,
@@ -242,6 +248,8 @@ export const blogAPI = {
                 };
                 
                 console.log('🔍 Creating post - Post data with author:', postDataWithAuthor);
+                console.log('🔍 Creating post - Author ID type:', typeof postDataWithAuthor.author_id);
+                console.log('🔍 Creating post - Author ID value:', postDataWithAuthor.author_id);
                 
                 const response = await api.post('/blog_posts', postDataWithAuthor);
                 return response;
@@ -253,7 +261,10 @@ export const blogAPI = {
             console.error('Error creating blog post:', error);
             if (error.response?.status === 409) {
                 console.error('🔍 409 Conflict - Error details:', error.response.data);
-                throw new Error('Blog post creation failed. This might be due to a duplicate entry or database constraint.');
+                console.error('🔍 409 Conflict - Full error response:', error.response);
+                console.error('🔍 409 Conflict - Error message:', error.response.data?.message);
+                console.error('🔍 409 Conflict - Error hint:', error.response.data?.hint);
+                throw new Error(`Blog post creation failed: ${error.response.data?.message || 'Database constraint error'}`);
             }
             throw error;
         }
@@ -568,11 +579,43 @@ export const apiUtils = {
     // Get current user from localStorage
     getCurrentUser: () => {
         const user = localStorage.getItem('user');
-        return user ? JSON.parse(user) : null;
+        const parsedUser = user ? JSON.parse(user) : null;
+        console.log('🔍 getCurrentUser called:', {
+            hasUser: !!user,
+            parsedUser: parsedUser,
+            userId: parsedUser?.id,
+            userEmail: parsedUser?.email
+        });
+        return parsedUser;
     },
     
     // Set current user in localStorage
     setCurrentUser: (user) => {
         localStorage.setItem('user', JSON.stringify(user));
+        console.log('🔍 setCurrentUser called:', {
+            user: user,
+            userId: user?.id,
+            userEmail: user?.email
+        });
+    },
+
+    // Check if user exists in database
+    checkUserExists: async (userId) => {
+        try {
+            if (isSupabase()) {
+                const response = await api.get(`/auth_users?id=eq.${userId}&select=id`);
+                const exists = response.data && response.data.length > 0;
+                console.log('🔍 checkUserExists:', {
+                    userId: userId,
+                    exists: exists,
+                    response: response.data
+                });
+                return exists;
+            }
+            return true; // For Django, assume user exists
+        } catch (error) {
+            console.error('Error checking user existence:', error);
+            return false;
+        }
     },
 };
