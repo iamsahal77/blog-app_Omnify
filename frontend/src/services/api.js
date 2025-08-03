@@ -3,7 +3,9 @@ import axios from 'axios';
 import { currentConfig } from '../config/config';
 
 // Check if we're using Supabase (production) or Django (development)
-const isSupabase = !!process.env.REACT_APP_API_URL;
+const cleanApiUrl = process.env.REACT_APP_API_URL ? 
+    process.env.REACT_APP_API_URL.replace(/^["']|["']$/g, '') : null;
+const isSupabase = !!cleanApiUrl && cleanApiUrl.includes('supabase');
 
 // Add some sample data for when API is unavailable
 const samplePosts = [
@@ -79,6 +81,9 @@ export const blogAPI = {
                     REACT_APP_SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
                     NODE_ENV: process.env.NODE_ENV
                 });
+                console.log('🔍 Cleaned API URL:', cleanApiUrl);
+                console.log('🔍 Current Config API URL:', currentConfig.API_BASE_URL);
+                console.log('🔍 Is Supabase check:', isSupabase);
                 
                 const response = await api.get('/blog_posts', { 
                     params: {
