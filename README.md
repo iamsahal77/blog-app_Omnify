@@ -220,12 +220,12 @@ This project is created for the Omnify assessment.
 
 ## 👨‍💻 Author
 
-**Sahal** - Full Stack Developer
+**Sahal KV** - 
 
 ## 📞 Support
 
 For any questions or issues, please contact:
-- Email: [Your Email]
+- Email: sahalwc4@mail.com
 - GitHub: https://github.com/iamsahal77
 
 ---
