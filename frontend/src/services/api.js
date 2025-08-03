@@ -8,21 +8,13 @@ const isSupabase = !!cleanApiUrl && cleanApiUrl.includes('supabase');
 
 // Get API base URL
 const getApiBaseUrl = () => {
-    console.log('🔧 getApiBaseUrl called');
-    console.log('🔧 cleanApiUrl:', cleanApiUrl);
-    console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
-    
     if (cleanApiUrl) {
-        console.log('🔧 Using cleanApiUrl:', cleanApiUrl);
         return cleanApiUrl;
     }
     
-    const fallbackUrl = process.env.NODE_ENV === 'production' 
+    return process.env.NODE_ENV === 'production' 
         ? 'https://qyqqhtwrtbjdcupvawbs.supabase.co/rest/v1'
         : 'http://localhost:8000/api';
-    
-    console.log('🔧 Using fallback URL:', fallbackUrl);
-    return fallbackUrl;
 };
 
 // Add some sample data for when API is unavailable
@@ -92,16 +84,6 @@ export const blogAPI = {
             if (isSupabase) {
                 // Supabase format
                 console.log('🔍 Fetching posts from Supabase...');
-                console.log('🔍 API URL:', API_BASE_URL);
-                console.log('🔍 Is Supabase:', isSupabase);
-                console.log('🔍 Environment Variables:', {
-                    REACT_APP_API_URL: process.env.REACT_APP_API_URL,
-                    REACT_APP_SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
-                    NODE_ENV: process.env.NODE_ENV
-                });
-                console.log('🔍 Cleaned API URL:', cleanApiUrl);
-                console.log('🔍 API Base URL:', API_BASE_URL);
-                console.log('🔍 Is Supabase check:', isSupabase);
                 
                 const response = await api.get('/blog_posts', { 
                     params: {
@@ -111,10 +93,7 @@ export const blogAPI = {
                     }
                 });
                 
-                console.log('📦 Supabase response:', response);
-                console.log('📦 Response data:', response.data);
-                console.log('📦 Response data type:', typeof response.data);
-                console.log('📦 Is array?', Array.isArray(response.data));
+                console.log('📦 Supabase response received');
                 
                 // Check if we got HTML instead of JSON (API error)
                 if (typeof response.data === 'string' && response.data.includes('<!doctype html>')) {

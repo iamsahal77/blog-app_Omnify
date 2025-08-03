@@ -34,8 +34,8 @@ function App() {
               <Navbar />
               <main className="pt-16" role="main"> 
                   <Routes>
-                      <Route path="/" element={<Test />} />
-                      <Route path="/home" element={<Home />} />
+                      <Route path="/" element={<Home />} />
+                      <Route path="/test" element={<Test />} />
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/post/:id" element={<BlogDetail />} />
                       <Route path="/create" element={<CreateBlog />} />
