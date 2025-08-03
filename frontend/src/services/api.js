@@ -82,6 +82,17 @@ export const blogAPI = {
             if (isSupabase) {
                 // Supabase format
                 console.log('🔍 Fetching posts from Supabase...');
+                console.log('🔍 API URL:', API_BASE_URL);
+                console.log('🔍 Is Supabase:', isSupabase);
+                
+                // First, let's test if we can access the API at all
+                try {
+                    const testResponse = await api.get('/');
+                    console.log('✅ API is accessible:', testResponse);
+                } catch (testError) {
+                    console.log('❌ API test failed:', testError);
+                }
+                
                 const response = await api.get('/posts', { 
                     params: {
                         select: '*',
@@ -97,6 +108,16 @@ export const blogAPI = {
                 
                 // Ensure we always return an array
                 const posts = Array.isArray(response.data) ? response.data : [];
+                
+                if (posts.length === 0) {
+                    console.log('📝 No posts found in database, using sample data...');
+                    return {
+                        data: {
+                            results: samplePosts,
+                            count: samplePosts.length
+                        }
+                    };
+                }
                 
                 return {
                     data: {
