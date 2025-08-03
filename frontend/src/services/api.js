@@ -47,7 +47,9 @@ if (isSupabase) {
     console.log('🔧 Supabase Configuration:', {
         baseURL: API_BASE_URL,
         hasApiKey: !!process.env.REACT_APP_SUPABASE_ANON_KEY,
-        apiKeyLength: process.env.REACT_APP_SUPABASE_ANON_KEY?.length || 0
+        apiKeyLength: process.env.REACT_APP_SUPABASE_ANON_KEY?.length || 0,
+        apiKeyStart: process.env.REACT_APP_SUPABASE_ANON_KEY?.substring(0, 20) + '...',
+        apiKeyEnd: '...' + process.env.REACT_APP_SUPABASE_ANON_KEY?.substring(-20)
     });
 }
 
@@ -106,6 +108,15 @@ export const blogAPI = {
                     console.error('❌ No Supabase API key found');
                     throw new Error('No Supabase API key configured');
                 }
+                
+                // Log the actual API key being used (first and last 10 chars for security)
+                const apiKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+                console.log('🔑 API Key Debug:', {
+                    length: apiKey.length,
+                    start: apiKey.substring(0, 10),
+                    end: apiKey.substring(apiKey.length - 10),
+                    isValidJWT: apiKey.split('.').length === 3
+                });
                 
                 const response = await api.get('/blog_posts', { 
                     params: {
