@@ -1,20 +1,26 @@
 // API service for communicating with backend
 import axios from 'axios';
 
-// Check if we're using Supabase (production) or Django (development)
-const cleanApiUrl = process.env.REACT_APP_API_URL ? 
-    process.env.REACT_APP_API_URL.replace(/^["']+|["']+$/g, '') : null;
-const isSupabase = !!cleanApiUrl && cleanApiUrl.includes('supabase');
-
-// Get API base URL
+// Get API base URL based on environment
 const getApiBaseUrl = () => {
-    if (cleanApiUrl) {
-        return cleanApiUrl;
+    const apiUrl = process.env.REACT_APP_API_URL;
+    if (apiUrl) {
+        // Remove any surrounding quotes that Netlify might add
+        return apiUrl.replace(/^["']+|["']+$/g, '');
     }
-    
-    return process.env.NODE_ENV === 'production' 
-        ? 'https://qyqqhtwrtbjdcupvawbs.supabase.co/rest/v1'
-        : 'http://localhost:8000/api';
+    return 'http://localhost:8000/api';
+};
+
+// Check if we're using Supabase
+const isSupabase = process.env.REACT_APP_API_URL && 
+    process.env.REACT_APP_API_URL.includes('supabase.co');
+
+// Get cleaned API key
+const getCleanedApiKey = () => {
+    const apiKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+    if (!apiKey) return '';
+    // Remove any surrounding quotes that Netlify might add
+    return apiKey.replace(/^["']+|["']+$/g, '');
 };
 
 // Add some sample data for when API is unavailable
@@ -39,30 +45,33 @@ const samplePosts = [
     }
 ];
 
-// Create axios instance with base configuration
-const API_BASE_URL = getApiBaseUrl();
-
-// Debug Supabase configuration
-if (isSupabase) {
-    console.log('🔧 Supabase Configuration:', {
-        baseURL: API_BASE_URL,
-        hasApiKey: !!process.env.REACT_APP_SUPABASE_ANON_KEY,
-        apiKeyLength: process.env.REACT_APP_SUPABASE_ANON_KEY?.length || 0,
-        apiKeyStart: process.env.REACT_APP_SUPABASE_ANON_KEY?.substring(0, 20) + '...',
-        apiKeyEnd: '...' + process.env.REACT_APP_SUPABASE_ANON_KEY?.substring(-20)
-    });
-}
-
+// Create axios instance with proper configuration
 export const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: getApiBaseUrl(),
     headers: {
         'Content-Type': 'application/json',
         ...(isSupabase && {
-            'apikey': (process.env.REACT_APP_SUPABASE_ANON_KEY || '').replace(/^["']+|["']+$/g, ''),
-            'Authorization': `Bearer ${(process.env.REACT_APP_SUPABASE_ANON_KEY || '').replace(/^["']+|["']+$/g, '')}`
+            'apikey': getCleanedApiKey(),
+            'Authorization': `Bearer ${getCleanedApiKey()}`
         })
     },
 });
+
+// Debug Supabase configuration
+if (isSupabase) {
+    const originalKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+    const cleanedKey = getCleanedApiKey();
+    console.log('🔧 Supabase Configuration:', {
+        baseURL: getApiBaseUrl(),
+        hasApiKey: !!originalKey,
+        apiKeyLength: originalKey.length,
+        cleanedKeyLength: cleanedKey.length,
+        apiKeyStart: cleanedKey.substring(0, 20) + '...',
+        apiKeyEnd: '...' + cleanedKey.substring(cleanedKey.length - 20),
+        hadQuotes: originalKey !== cleanedKey,
+        isValidJWT: cleanedKey.split('.').length === 3
+    });
+}
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
