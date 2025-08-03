@@ -106,6 +106,12 @@ export const blogAPI = {
                 console.log('📦 Response data type:', typeof response.data);
                 console.log('📦 Is array?', Array.isArray(response.data));
                 
+                // Check if we got HTML instead of JSON (API error)
+                if (typeof response.data === 'string' && response.data.includes('<!doctype html>')) {
+                    console.error('❌ API returned HTML instead of JSON - likely authentication issue');
+                    throw new Error('API authentication failed - returned HTML');
+                }
+                
                 // Ensure we always return an array
                 const posts = Array.isArray(response.data) ? response.data : [];
                 

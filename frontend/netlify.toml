@@ -8,6 +8,7 @@
   NPM_FLAGS = ""
   NODE_ENV = "production"
   REACT_APP_API_URL = "https://qyqqhtwrtbjdcupvawbs.supabase.co/rest/v1"
+  REACT_APP_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5cXFodHdydGJqZGN1cHZhd2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMjk5ODcsImV4cCI6MjA2OTcwNTk4N30.s5VrsiNopA669RfQyvtAFlAB-X0BUsNJdrzI_0uSwA0"
   REACT_APP_FRONTEND_URL = "https://omnifyblogss.netlify.app"
 
 [[redirects]]
