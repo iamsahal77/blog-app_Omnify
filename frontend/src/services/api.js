@@ -3,17 +3,26 @@ import axios from 'axios';
 
 // Check if we're using Supabase (production) or Django (development)
 const cleanApiUrl = process.env.REACT_APP_API_URL ? 
-    process.env.REACT_APP_API_URL.replace(/^["']|["']$/g, '') : null;
+    process.env.REACT_APP_API_URL.replace(/^["']+|["']+$/g, '') : null;
 const isSupabase = !!cleanApiUrl && cleanApiUrl.includes('supabase');
 
 // Get API base URL
 const getApiBaseUrl = () => {
+    console.log('🔧 getApiBaseUrl called');
+    console.log('🔧 cleanApiUrl:', cleanApiUrl);
+    console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
+    
     if (cleanApiUrl) {
+        console.log('🔧 Using cleanApiUrl:', cleanApiUrl);
         return cleanApiUrl;
     }
-    return process.env.NODE_ENV === 'production' 
+    
+    const fallbackUrl = process.env.NODE_ENV === 'production' 
         ? 'https://qyqqhtwrtbjdcupvawbs.supabase.co/rest/v1'
         : 'http://localhost:8000/api';
+    
+    console.log('🔧 Using fallback URL:', fallbackUrl);
+    return fallbackUrl;
 };
 
 // Add some sample data for when API is unavailable
