@@ -89,39 +89,15 @@ api.interceptors.response.use(
 
 // Blog posts API - handles both Django and Supabase formats
 export const blogAPI = {
-    // Get all blog posts with pagination
+    // Get blog posts with pagination and search
     getPosts: async (params = {}) => {
         try {
             if (isSupabase) {
                 // Supabase format
                 console.log('🔍 Fetching posts from Supabase...');
                 
-                // Try to fetch posts from Supabase
-                console.log('🔍 Making request to:', `${API_BASE_URL}/blog_posts`);
-                console.log('🔍 Headers:', {
-                    'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
-                    'Authorization': process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'
-                });
-                
-                // Check if we have a valid API key
-if (!process.env.REACT_APP_SUPABASE_ANON_KEY) {
-    console.error('❌ No Supabase API key found');
-    throw new Error('No Supabase API key configured');
-}
-
-// Clean the API key - remove any surrounding quotes
-const apiKey = process.env.REACT_APP_SUPABASE_ANON_KEY.replace(/^["']+|["']+$/g, '');
-console.log('🔑 API Key Debug:', {
-    originalLength: process.env.REACT_APP_SUPABASE_ANON_KEY.length,
-    cleanedLength: apiKey.length,
-    start: apiKey.substring(0, 10),
-    end: apiKey.substring(apiKey.length - 10),
-    isValidJWT: apiKey.split('.').length === 3,
-    hadQuotes: process.env.REACT_APP_SUPABASE_ANON_KEY !== apiKey
-});
-                
-                // Remove page_size from params as it's not supported by Supabase
-                const { page_size, ...supabaseParams } = params;
+                // Remove page_size from params as it's not supported by Supabase, use limit instead
+                const { page_size, page, ...supabaseParams } = params;
                 
                 // For Supabase, we need to handle pagination differently
                 // If limit is provided, use it directly
@@ -140,29 +116,13 @@ console.log('🔑 API Key Debug:', {
                 
                 console.log('📦 Supabase response received');
                 
-                // Check if we got HTML instead of JSON (API error)
-                if (typeof response.data === 'string' && response.data.includes('<!doctype html>')) {
-                    console.error('❌ API returned HTML instead of JSON - likely authentication issue');
-                    throw new Error('API authentication failed - returned HTML');
-                }
-                
-                // Ensure we always return an array
-                const posts = Array.isArray(response.data) ? response.data : [];
-                
-                if (posts.length === 0) {
-                    console.log('📝 No posts found in database, using sample data...');
-                    return {
-                        data: {
-                            results: samplePosts,
-                            count: samplePosts.length
-                        }
-                    };
-                }
-                
+                // Format response to match Django format
                 return {
                     data: {
-                        results: posts,
-                        count: posts.length
+                        results: response.data || [],
+                        count: response.data?.length || 0,
+                        next: null,
+                        previous: null
                     }
                 };
             } else {
@@ -176,7 +136,6 @@ console.log('🔑 API Key Debug:', {
             console.error('❌ Error status:', error.response?.status);
             console.error('❌ Error data:', error.response?.data);
             
-            // 401 error usually means authentication issue
             if (error.response?.status === 401) {
                 console.error('🔐 401 Error - Authentication failed. Possible causes:');
                 console.error('   - Supabase API key is invalid or expired');
@@ -185,11 +144,14 @@ console.log('🔑 API Key Debug:', {
                 console.error('   - Supabase project settings have changed');
             }
             
+            // Return sample data as fallback
             console.log('🔄 Using sample data as fallback...');
             return {
                 data: {
                     results: samplePosts,
-                    count: samplePosts.length
+                    count: samplePosts.length,
+                    next: null,
+                    previous: null
                 }
             };
         }
@@ -559,4 +521,4 @@ export const apiUtils = {
     setCurrentUser: (user) => {
         localStorage.setItem('user', JSON.stringify(user));
     },
-}; 
+};
