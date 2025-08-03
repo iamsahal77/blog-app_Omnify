@@ -13,6 +13,7 @@ import Newsletter from './components/NewsLetter'
 import Footer from './components/Footer'
 import ErrorBoundary from './components/ErrorBoundary'
 import { AuthProvider } from './context/AuthContext'
+import Test from './pages/Test'
 
 // Debug environment variables
 console.log('🔍 App.jsx - Environment Variables:', {
@@ -20,6 +21,9 @@ console.log('🔍 App.jsx - Environment Variables:', {
   REACT_APP_SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
   NODE_ENV: process.env.NODE_ENV
 });
+
+// Simple test to ensure app loads
+console.log('✅ App.jsx loaded successfully');
 
 function App() {
   return (
@@ -30,7 +34,8 @@ function App() {
               <Navbar />
               <main className="pt-16" role="main"> 
                   <Routes>
-                      <Route path="/" element={<Home />} />
+                      <Route path="/" element={<Test />} />
+                      <Route path="/home" element={<Home />} />
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/post/:id" element={<BlogDetail />} />
                       <Route path="/create" element={<CreateBlog />} />

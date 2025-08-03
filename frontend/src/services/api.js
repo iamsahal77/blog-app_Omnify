@@ -1,11 +1,20 @@
 // API service for communicating with backend
 import axios from 'axios';
-import { currentConfig } from '../config/config';
 
 // Check if we're using Supabase (production) or Django (development)
 const cleanApiUrl = process.env.REACT_APP_API_URL ? 
     process.env.REACT_APP_API_URL.replace(/^["']|["']$/g, '') : null;
 const isSupabase = !!cleanApiUrl && cleanApiUrl.includes('supabase');
+
+// Get API base URL
+const getApiBaseUrl = () => {
+    if (cleanApiUrl) {
+        return cleanApiUrl;
+    }
+    return process.env.NODE_ENV === 'production' 
+        ? 'https://qyqqhtwrtbjdcupvawbs.supabase.co/rest/v1'
+        : 'http://localhost:8000/api';
+};
 
 // Add some sample data for when API is unavailable
 const samplePosts = [
@@ -30,7 +39,7 @@ const samplePosts = [
 ];
 
 // Create axios instance with base configuration
-const API_BASE_URL = currentConfig.API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
@@ -82,7 +91,7 @@ export const blogAPI = {
                     NODE_ENV: process.env.NODE_ENV
                 });
                 console.log('🔍 Cleaned API URL:', cleanApiUrl);
-                console.log('🔍 Current Config API URL:', currentConfig.API_BASE_URL);
+                console.log('🔍 API Base URL:', API_BASE_URL);
                 console.log('🔍 Is Supabase check:', isSupabase);
                 
                 const response = await api.get('/blog_posts', { 
