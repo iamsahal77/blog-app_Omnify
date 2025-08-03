@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     title VARCHAR(200) NOT NULL,
     content TEXT NOT NULL,
     excerpt TEXT,
-    author_id UUID REFERENCES auth_users(id) ON DELETE CASCADE,
+    author_id UUID,
     category VARCHAR(100),
     image VARCHAR(500),
     read_time INTEGER,
@@ -34,7 +34,7 @@ DO $$
 BEGIN
     -- Add author_id column if it doesn't exist (use UUID to match existing structure)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'blog_posts' AND column_name = 'author_id') THEN
-        ALTER TABLE blog_posts ADD COLUMN author_id UUID REFERENCES auth_users(id) ON DELETE CASCADE;
+        ALTER TABLE blog_posts ADD COLUMN author_id UUID;
     END IF;
     
     -- Add category column if it doesn't exist
@@ -62,6 +62,24 @@ BEGIN
         ALTER TABLE blog_posts ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
     END IF;
 END $$;
+
+-- Drop existing foreign key constraints if they exist
+DO $$
+BEGIN
+    -- Drop foreign key constraint if it exists
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'blog_posts_author_id_fkey' 
+        AND table_name = 'blog_posts'
+    ) THEN
+        ALTER TABLE blog_posts DROP CONSTRAINT blog_posts_author_id_fkey;
+    END IF;
+END $$;
+
+-- Add the correct foreign key constraint to auth_users table
+ALTER TABLE blog_posts 
+ADD CONSTRAINT blog_posts_author_id_fkey 
+FOREIGN KEY (author_id) REFERENCES auth_users(id) ON DELETE CASCADE;
 
 -- Enable Row Level Security (RLS) if not already enabled
 ALTER TABLE auth_users ENABLE ROW LEVEL SECURITY;
