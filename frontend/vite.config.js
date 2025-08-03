@@ -12,6 +12,7 @@ export default defineConfig({
     'process.env': {
       NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
       REACT_APP_API_URL: JSON.stringify(process.env.REACT_APP_API_URL || 'http://localhost:8000/api'),
+      REACT_APP_SUPABASE_ANON_KEY: JSON.stringify(process.env.REACT_APP_SUPABASE_ANON_KEY || ''),
       REACT_APP_FRONTEND_URL: JSON.stringify(process.env.REACT_APP_FRONTEND_URL || 'http://localhost:5173'),
     }
   },
