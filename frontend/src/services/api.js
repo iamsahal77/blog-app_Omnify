@@ -42,6 +42,15 @@ const samplePosts = [
 // Create axios instance with base configuration
 const API_BASE_URL = getApiBaseUrl();
 
+// Debug Supabase configuration
+if (isSupabase) {
+    console.log('🔧 Supabase Configuration:', {
+        baseURL: API_BASE_URL,
+        hasApiKey: !!process.env.REACT_APP_SUPABASE_ANON_KEY,
+        apiKeyLength: process.env.REACT_APP_SUPABASE_ANON_KEY?.length || 0
+    });
+}
+
 export const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -84,6 +93,19 @@ export const blogAPI = {
             if (isSupabase) {
                 // Supabase format
                 console.log('🔍 Fetching posts from Supabase...');
+                
+                // Try to fetch posts from Supabase
+                console.log('🔍 Making request to:', `${API_BASE_URL}/blog_posts`);
+                console.log('🔍 Headers:', {
+                    'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
+                    'Authorization': process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'
+                });
+                
+                // Check if we have a valid API key
+                if (!process.env.REACT_APP_SUPABASE_ANON_KEY) {
+                    console.error('❌ No Supabase API key found');
+                    throw new Error('No Supabase API key configured');
+                }
                 
                 const response = await api.get('/blog_posts', { 
                     params: {
@@ -128,6 +150,18 @@ export const blogAPI = {
         } catch (error) {
             console.error('❌ Error fetching posts:', error);
             console.error('❌ Error response:', error.response);
+            console.error('❌ Error status:', error.response?.status);
+            console.error('❌ Error data:', error.response?.data);
+            
+            // 401 error usually means authentication issue
+            if (error.response?.status === 401) {
+                console.error('🔐 401 Error - Authentication failed. Possible causes:');
+                console.error('   - Supabase API key is invalid or expired');
+                console.error('   - Row Level Security (RLS) is blocking access');
+                console.error('   - Table permissions are not set correctly');
+                console.error('   - Supabase project settings have changed');
+            }
+            
             console.log('🔄 Using sample data as fallback...');
             return {
                 data: {
