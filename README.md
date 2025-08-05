@@ -1,4 +1,4 @@
-# 🚀 Blog Application - Omnify Assessment
+# 🚀 Blog Application
 
 A full-stack blog application built with React and Django, featuring user authentication, CRUD operations, and responsive design.
 
@@ -230,4 +230,3 @@ For any questions or issues, please contact:
 
 ---
 
-**Note**: This application was built as part of the Omnify Full Stack Intern Assessment. It demonstrates proficiency in modern web development technologies and best practices. 
